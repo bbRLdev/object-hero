@@ -3,3 +3,4 @@ imutils
 opencv-python
 mediapipe
 tqdm
+vgamepad
