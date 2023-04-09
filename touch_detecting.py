@@ -14,7 +14,7 @@ def find_color(frame, points):
     cnts = imutils.grab_contours(cnts)
     for c in cnts:
         area = cv2.contourArea(c) # find how big countour is
-        if area > 2000:       # only if countour is big enough, then
+        if area > 1000:       # only if countour is big enough, then
             M = cv2.moments(c)
             cx = int(M['m10'] / M['m00']) # calculate X position
             cy = int(M['m01'] / M['m00']) # calculate Y position
@@ -27,7 +27,7 @@ def _parse_args():
     :return: the parsed args bundle
     """
     parser = argparse.ArgumentParser(description='main.py')    
-    parser.add_argument('--bgr_range_path', type=str, default='color-ranges/color-values-bedroom.json', help='JSON file to load max and min BGR values for each color')
+    parser.add_argument('--bgr_range_path', type=str, default='color-ranges\color-values-gopro-table.json', help='JSON file to load max and min BGR values for each color')
     # parser.add_argument('--train_path', type=str, default='data/train.txt', help='path to train set (you should not need to modify)')
     # parser.add_argument('--dev_path', type=str, default='data/dev.txt', help='path to dev set (you should not need to modify)')
     # parser.add_argument('--blind_test_path', type=str, default='data/test-blind.txt', help='path to blind test set (you should not need to modify)')
@@ -60,7 +60,7 @@ def main():
         frame = detector.findHands(frame, draw=True )
         lmList=detector.findPosition(frame,draw=False)
         pointer_x_y = None
-        if(len(lmList) > 1 and lmList[8][2]<lmList[6][2]):
+        if(len(lmList) > 1 and lmList[8][2]>lmList[6][2]):
             pointer_x_y = (lmList[8][1], lmList[8][2])
         hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) #convertion to HSV
         # mask =  cv2.inRange(hsv_frame, colors['blue'][0], colors['blue'][1])

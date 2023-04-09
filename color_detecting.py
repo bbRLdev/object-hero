@@ -13,7 +13,7 @@ def find_color(frame, points):
     cnts = imutils.grab_contours(cnts)
     for c in cnts:
         area = cv2.contourArea(c) # find how big countour is
-        if area > 5000:       # only if countour is big enough, then
+        if area > 1000:       # only if countour is big enough, then
             M = cv2.moments(c)
             cx = int(M['m10'] / M['m00']) # calculate X position
             cy = int(M['m01'] / M['m00']) # calculate Y position
@@ -26,7 +26,7 @@ def _parse_args():
     :return: the parsed args bundle
     """
     parser = argparse.ArgumentParser(description='main.py')    
-    parser.add_argument('--bgr_range_path', type=str, default='color-ranges/color-values-bedroom.json', help='JSON file to load max and min BGR values for each color')
+    parser.add_argument('--bgr_range_path', type=str, default='color-ranges\color-values-gopro-table.json', help='JSON file to load max and min BGR values for each color')
     # parser.add_argument('--train_path', type=str, default='data/train.txt', help='path to train set (you should not need to modify)')
     # parser.add_argument('--dev_path', type=str, default='data/dev.txt', help='path to dev set (you should not need to modify)')
     # parser.add_argument('--blind_test_path', type=str, default='data/test-blind.txt', help='path to blind test set (you should not need to modify)')
@@ -58,7 +58,6 @@ if __name__ == '__main__':
     #         'green': [np.array([33, 19, 105]), np.array([77, 255, 255])]}
 
 
-    fgbg2 = cv2.createBackgroundSubtractorMOG2();
     cap = cv2.VideoCapture(0)
     while cap.isOpened(): #main loop
         _, frame = cap.read()
@@ -71,7 +70,6 @@ if __name__ == '__main__':
             found_color = find_color(hsv_frame, clr)
             if found_color is not None:  # call find_color function above
                 c, cx, cy = found_color
-                print(name, cx, cy)
                 cv2.drawContours(frame, [c], -1, WHITE, 3) #draw contours
                 cv2.circle(frame, (cx, cy), 7, WHITE, -1)  # draw circle
                 cv2.putText(frame, name, (cx,cy), 

@@ -8,7 +8,7 @@ def _parse_args():
     :return: the parsed args bundle
     """
     parser = argparse.ArgumentParser(description='find-camera-values.py')
-    parser.add_argument('--im_path', type=str, default='dots.jpg', help='image to find the color values of')
+    parser.add_argument('--im_path', type=str, default='D:\object-hero\WIN_20230409_14_25_08_Pro.jpg', help='image to find the color values of')
     args = parser.parse_args()
     return args
 def doNothing(x):
@@ -27,19 +27,25 @@ if __name__ == '__main__':
     cv2.createTrackbar('max_red', 'Track Bars', 0, 255, doNothing)
 
     # reading the image
-    object_image = cv2.imread(args.im_path)
+    # object_image = cv2.imread(args.im_path)
 
     #resizing the image for viewing purposes
-    resized_image = cv2.resize(object_image,(800, 626))
+    # resized_image = cv2.resize(object_image,(800, 626))
 
-    #converting into HSV color model
-    hsv_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2HSV)
+    # #converting into HSV color model
+    # hsv_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2HSV)
 
     #showing both resized and hsv image in named windows
-    cv2.imshow('Base Image', resized_image)
-    cv2.imshow('HSV Image', hsv_image)
+
+
     #creating a loop to get the feedback of the changes in trackbars
-    while True:
+    # frame = cv2.imread(args.im_path)
+    cap = cv2.VideoCapture(0)
+    _, frame = cap.read()
+    del cap
+    count = 0
+    while True: #main loop
+        hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) #convertion to HSV
         #reading the trackbar values for thresholds
         min_blue = cv2.getTrackbarPos('min_blue', 'Track Bars')
         min_green = cv2.getTrackbarPos('min_green', 'Track Bars')
@@ -48,12 +54,16 @@ if __name__ == '__main__':
         max_blue = cv2.getTrackbarPos('max_blue', 'Track Bars')
         max_green = cv2.getTrackbarPos('max_green', 'Track Bars')
         max_red = cv2.getTrackbarPos('max_red', 'Track Bars')
-        
         #using inrange function to turn on the image pixels where object threshold is matched
-        mask = cv2.inRange(hsv_image, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
-        #showing the mask image
-        cv2.imshow('Mask Image', mask)
-        # checking if q key is pressed to break out of loop
+        masked = cv2.inRange(hsv_frame, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
+        cv2.imshow('reg frame', frame)
+        cv2.imshow('hsv', hsv_frame)
+
+            # cv2.imshow('frame', frame)
+            #showing the mask image
+            # checking if q key is pressed to break out of loop
+        cv2.imshow('masked', masked)
+        count += 1
         key = cv2.waitKey(25)
         if key == ord('q'):
             break
