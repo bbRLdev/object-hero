@@ -92,8 +92,7 @@ if __name__ == '__main__':
     HEIGHT, WIDTH = frame.shape[0], frame.shape[1]
     print("Video Capture Shape:", frame.shape)
     group_frame = np.zeros((frame.shape[0] * 2, frame.shape[1] * 2, 3))
-    print("Group Frame Shape", group_frame.shape)
-    print("Press the starting character of the Guitar Hero Color you would like to mask out")
+    print("Group Frame Shape:", group_frame.shape)
     while True:
         _, frame = cap.read()
         if use_gaussian:
@@ -111,6 +110,7 @@ if __name__ == '__main__':
                 if contour is not None:
                     current_contours.append((color, contour))
         resultant_frame = np.copy(frame)
+        # Draw contours
         if use_center:
             for (name, (c, cx, cy)) in current_contours:
                 resultant_frame = cv2.circle(resultant_frame, (cx, cy), 2, FindRangeConstants.WHITE, 2)
@@ -131,6 +131,7 @@ if __name__ == '__main__':
                                             1, 
                                             color=FindRangeConstants.WHITE, 
                                             thickness=2)
+        # construct the combined frame
         group_frame[0:HEIGHT, 0:WIDTH] = hsv_frame 
         cv2.putText(group_frame, 'HSV Frame', (WIDTH//2 - WIDTH//8, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, color=FindRangeConstants.CYAN, thickness=2)
         group_frame[0:HEIGHT, WIDTH:WIDTH*2] = np.stack([masked, masked, masked], axis=-1)
@@ -140,7 +141,9 @@ if __name__ == '__main__':
         group_frame[HEIGHT:HEIGHT*2, WIDTH:WIDTH*2] = frame
         cv2.putText(group_frame, 'Original Frame', (WIDTH + WIDTH//2-WIDTH//8, HEIGHT + 50), cv2.FONT_HERSHEY_SIMPLEX, 1, color=FindRangeConstants.CYAN, thickness=2)
         cv2.imshow('Capture', group_frame.astype(np.uint8))
+
         count += 1
+        # process user inputs, if any
         key = cv2.waitKey(25)
         if key == ord('q'):
             break
@@ -157,10 +160,6 @@ if __name__ == '__main__':
         elif key in FindRangeConstants.COLOR_KEYMAPS.keys():
             current_color = FindRangeConstants.COLOR_KEYMAPS[key]
             set_preset(preset_state[current_color])
-    #printing the threshold values for usage in detection application
-    print(f'min_{FindRangeConstants.BLUE} {mins[0]}  min_{FindRangeConstants.GREEN} {mins[1]} min_{FindRangeConstants.RED} {mins[2]}')
-    print(f'max_{FindRangeConstants.BLUE} {maxs[0]}  min_{FindRangeConstants.GREEN} {maxs[1]} min_{FindRangeConstants.RED} {maxs[2]}')
-    #destroying all windows
     cv2.destroyAllWindows()
     res = input('Enter filename to save or type q to quit: ')
     if res == 'q':
