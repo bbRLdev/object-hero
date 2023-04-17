@@ -16,10 +16,10 @@
       "max_red": 255
   },
   "green": {
-      "min_blue": 30,
-      "min_green": 110,
-      "min_red": 50,
-      "max_blue": 65,
+      "min_blue": 35,
+      "min_green": 190,
+      "min_red": 120,
+      "max_blue": 85,
       "max_green": 255,
       "max_red": 255
   },
