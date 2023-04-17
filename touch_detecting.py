@@ -28,17 +28,6 @@ def _parse_args():
     """
     parser = argparse.ArgumentParser(description='main.py')    
     parser.add_argument('--bgr_range_path', type=str, default='color-ranges\color-values-gopro-table.json', help='JSON file to load max and min BGR values for each color')
-    # parser.add_argument('--train_path', type=str, default='data/train.txt', help='path to train set (you should not need to modify)')
-    # parser.add_argument('--dev_path', type=str, default='data/dev.txt', help='path to dev set (you should not need to modify)')
-    # parser.add_argument('--blind_test_path', type=str, default='data/test-blind.txt', help='path to blind test set (you should not need to modify)')
-    # parser.add_argument('--test_output_path', type=str, default='test-blind.output.txt', help='output path for test predictions')
-    # parser.add_argument('--no_run_on_test', dest='run_on_test', default=True, action='store_false', help='skip printing output on the test set')
-    # parser.add_argument('--word_vecs_path', type=str, default='data/glove.6B.300d-relativized.txt', help='path to word embeddings to use')
-    # parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
-    # parser.add_argument('--feats', type=str, default='UNIGRAM', help='features if using linear model')
-    # parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs to train for')
-    # parser.add_argument('--hidden_size', type=int, default=100, help='hidden layer size')
-    # parser.add_argument('--batch_size', type=int, default=1, help='training batch size; 1 by default and you do not need to batch unless you want to')
     args = parser.parse_args()
     return args
 def main():    
