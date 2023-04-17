@@ -1,3 +1,5 @@
+import vgamepad as vg
+
 class FindRangeConstants():
     ORANGE = 'orange'
     RED = 'red'
@@ -16,3 +18,12 @@ class ControllerConstants():
     ALL_COLORS = [GREEN, YELLOW, RED, BLUE, ORANGE],
     BGR = [BLUE, GREEN, RED],
     EASY_COLORS = [GREEN, RED, YELLOW]
+    WHITE = (255, 255, 255)
+    CYAN = (255, 255, 100)
+    INPUTS = {
+        GREEN : vg.XUSB_BUTTON.XUSB_GAMEPAD_A,
+        RED : vg.XUSB_BUTTON.XUSB_GAMEPAD_B,
+        YELLOW : vg.XUSB_BUTTON.XUSB_GAMEPAD_Y,
+        BLUE : vg.XUSB_BUTTON.XUSB_GAMEPAD_X,
+        ORANGE : vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER,
+    }

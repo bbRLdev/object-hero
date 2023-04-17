@@ -7,29 +7,17 @@ import imutils
 import vgamepad as vg
 import itertools
 import math
-import sys
-STRUM = "strum"
-RED = "red"
-YELLOW = "yellow"
-ORANGE = "orange"
-BLUE = "blue"
-GREEN = "green"
-INPUTS = {
-    GREEN : vg.XUSB_BUTTON.XUSB_GAMEPAD_A,
-    RED : vg.XUSB_BUTTON.XUSB_GAMEPAD_B,
-    YELLOW : vg.XUSB_BUTTON.XUSB_GAMEPAD_Y,
-    BLUE : vg.XUSB_BUTTON.XUSB_GAMEPAD_X,
-    ORANGE : vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER,
-    STRUM : vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP
-}
-def find_color(frame, points):
+from constants import ControllerConstants
+
+
+def find_color(frame, points, thresh):
     mask = cv2.inRange(frame, points[0], points[1])#create mask with boundaries 
     cnts = cv2.findContours(mask, cv2.RETR_TREE, 
-                           cv2.CHAIN_APPROX_SIMPLE) # find contours from mask
+                           cv2.CHAIN_APPROX_SIMPLE) 
     cnts = imutils.grab_contours(cnts)
     for c in cnts:
-        area = cv2.contourArea(c) # find how big countour is
-        if area > 1000:       # only if countour is big enough, then
+        area = cv2.contourArea(c) 
+        if area > thresh:       
             M = cv2.moments(c)
             cx = int(M['m10'] / M['m00']) # calculate X position
             cy = int(M['m01'] / M['m00']) # calculate Y position
@@ -47,17 +35,8 @@ def _parse_args():
     parser.add_argument('--difficulty', type=str, default='easy', help='difficulty level. maps middle 3 right fingers to green, red, and yellow respectively')
     parser.add_argument('--distance', type=float, default=20.0, help='distance finger has to be to box')
     parser.add_argument('--use_center', type=bool, default=False)
-    # parser.add_argument('--train_path', type=str, default='data/train.txt', help='path to train set (you should not need to modify)')
-    # parser.add_argument('--dev_path', type=str, default='data/dev.txt', help='path to dev set (you should not need to modify)')
-    # parser.add_argument('--blind_test_path', type=str, default='data/test-blind.txt', help='path to blind test set (you should not need to modify)')
-    # parser.add_argument('--test_output_path', type=str, default='test-blind.output.txt', help='output path for test predictions')
-    # parser.add_argument('--no_run_on_test', dest='run_on_test', default=True, action='store_false', help='skip printing output on the test set')
-    # parser.add_argument('--word_vecs_path', type=str, default='data/glove.6B.300d-relativized.txt', help='path to word embeddings to use')
-    # parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
-    # parser.add_argument('--feats', type=str, default='UNIGRAM', help='features if using linear model')
-    # parser.add_argument('--num_epochs', type=int, default=10, help='number of epochs to train for')
-    # parser.add_argument('--hidden_size', type=int, default=100, help='hidden layer size')
-    # parser.add_argument('--batch_size', type=int, default=1, help='training batch size; 1 by default and you do not need to batch unless you want to')
+    parser.add_argument('--verbose', type=bool, default=False)
+    parser.add_argument('--area_threshold', type=int, default=1000)
     args = parser.parse_args()
     return args
 def main():
@@ -66,6 +45,10 @@ def main():
     cap=cv2.VideoCapture(0)
     DIFFICULTY = args.difficulty
     DISTANCE = args.distance
+    INTERVAL = args.draw_buttons_interval
+    AREA_THRESH = args.area_threshold
+    VERBOSE = args.verbose
+    USE_CENTER = args.use_center
     # I have defined lower and upper boundaries for each color for my camera
     # Strongly recommended finding for your own camera.
     with open(args.bgr_range_path) as file:
@@ -74,52 +57,51 @@ def main():
     for color in data:
         vals = list(data[color].values())
         colors[color] = (np.array(vals[0:3], dtype=np.uint8), np.array(vals[3:], dtype=np.uint8))
-    print(colors)
+
     detector = htm.handDetector(detectionCon=0.75)
     prev_colors_pressed = set()
     count = 0 
-    interval = args.draw_buttons_interval
     fps = int(cap.get(cv2.CAP_PROP_FPS))
-    print(fps)
+    if VERBOSE:
+        print("Active colors: \n", colors)
+        print("Capture FPS: ", fps)
     while True:
         _,frame=cap.read()
         frame = detector.findHands(frame, draw=True )
-        lmList=detector.findPosition(frame,draw=False)
+        lm_list=detector.findPosition(frame,draw=False)
         x_y_list = []
-        if(len(lmList) > 1):
-            if lmList[8][2]>lmList[5][2]: # pointer
-                x_y_list.append((lmList[8][1], lmList[8][2]))
-            if lmList[12][2]>lmList[9][2]: # middle
-                x_y_list.append((lmList[12][1], lmList[12][2]))
-            if lmList[16][2]>lmList[13][2]: # index
-                x_y_list.append((lmList[16][1], lmList[16][2]))
-            if lmList[20][2]>lmList[17][2]: # pinky
-                x_y_list.append((lmList[20][1], lmList[20][2]))
+        if(len(lm_list) > 1):
+            # compare x y of finger tip to corresponding knuckle
+            if lm_list[8][2]>lm_list[5][2]: # pointer
+                x_y_list.append((lm_list[8][1], lm_list[8][2]))
+            if lm_list[12][2]>lm_list[9][2]: # middle
+                x_y_list.append((lm_list[12][1], lm_list[12][2]))
+            if lm_list[16][2]>lm_list[13][2]: # index
+                x_y_list.append((lm_list[16][1], lm_list[16][2]))
+            if lm_list[20][2]>lm_list[17][2]: # pinky
+                x_y_list.append((lm_list[20][1], lm_list[20][2]))
         hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) #convertion to HSV
-        # mask =  cv2.inRange(hsv_frame, colors['blue'][0], colors['blue'][1])
-        # bitwise = cv2.bitwise_and(mask, motion_frame)
-
-        if count % interval == 0:
+        if count % INTERVAL == 0:
             contour_buffer = []
             for name, clr in colors.items(): # for each color in colors
-                found_color = find_color(hsv_frame, clr)
+                found_color = find_color(hsv_frame, clr, AREA_THRESH)
                 if found_color is not None:
                     c, cx, cy = found_color
                     contour_buffer.append((name, (c, cx, cy)))
-                    if not args.use_center:
-                        cv2.drawContours(frame, [c], -1, (255, 255, 255), 3) #draw contours
+                    if USE_CENTER:
+                        cv2.circle(frame, (cx, cy), 2, ControllerConstants.CYAN, 2)
                     else:
-                        cv2.circle(frame, (cx, cy), 2, (255, 255, 0), 2)
+                        cv2.drawContours(frame, [c], -1, ControllerConstants.CYAN, 3) #draw contours
         else:
-            if args.use_center:
+            if USE_CENTER:
                 for contour in contour_buffer:
-                    cv2.circle(frame, (contour[1][1], contour[1][2]), 2, (255, 255, 255), 2)
+                    cv2.circle(frame, (contour[1][1], contour[1][2]), 2, ControllerConstants.WHITE, 2)
             else:
-                cv2.drawContours(frame, [contour[1][0] for contour in contour_buffer], -1, (255, 255, 255), 3)
+                cv2.drawContours(frame, [contour[1][0] for contour in contour_buffer], -1, ControllerConstants.WHITE, 3)
         cur_colors_pressed = set()
         if len(x_y_list) > 0 and len(contour_buffer) > 0:  # call find_color function above
             for x_y, contour in itertools.product(x_y_list, contour_buffer):
-                if args.use_center:
+                if USE_CENTER:
                     c, cx, cy = contour[1]
                     x, y = x_y
                     result = math.hypot(cx - x, cy - y)
@@ -127,14 +109,14 @@ def main():
                     result = cv2.pointPolygonTest(contour, x_y, True)
                 if abs(result) < DISTANCE:
                     cur_colors_pressed.add(contour[0])
-                    if args.use_center:
+                    if VERBOSE and USE_CENTER:
                         print(contour[0], abs(result))
         for color in cur_colors_pressed:
-            gamepad.press_button(INPUTS[color])
+            gamepad.press_button(ControllerConstants.INPUTS[color])
         gamepad.update()
         colors_to_release = prev_colors_pressed.difference(cur_colors_pressed)
         for color in colors_to_release:
-            gamepad.release_button(INPUTS[color])
+            gamepad.release_button(ControllerConstants.INPUTS[color])
         gamepad.update()
         print(cur_colors_pressed, prev_colors_pressed)
         prev_colors_pressed = cur_colors_pressed
