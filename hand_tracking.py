@@ -4,63 +4,69 @@ import mediapipe as mp
 import time
  
  
-class handDetector():
-    def __init__(self, mode=False, maxHands=2, modelComplexity=1, detectionCon=0.5, trackCon=0.5):
+class HandDetector():
+    def __init__(self, mode=False, max_hands=2, model_complexity=1, detection_confidence=0.5, track_confidence=0.5):
+        """_summary_
+
+        Args:
+            mode (bool, optional): _description_. Defaults to False.
+            max_hands (int, optional): _description_. Defaults to 2.
+            model_complexity (int, optional): _description_. Defaults to 1.
+            detection_confidence (float, optional): _description_. Defaults to 0.5.
+            track_confidence (float, optional): _description_. Defaults to 0.5.
+        """
         self.mode = mode
-        self.maxHands = maxHands
-        self.detectionCon = detectionCon
-        self.trackCon = trackCon
-        self.modelComplexity = modelComplexity
+        self.max_hands = max_hands
+        self.detection_confidence = detection_confidence
+        self.track_confidence = track_confidence
+        self.model_complexity = model_complexity
  
-        self.mpHands = mp.solutions.hands
-        self.hands = self.mpHands.Hands(self.mode, self.maxHands, self.modelComplexity,
-                                        self.detectionCon, self.trackCon)
-        self.mpDraw = mp.solutions.drawing_utils
+        self.mp_hands = mp.solutions.hands
+        self.hands = self.mp_hands.Hands(self.mode, self.max_hands, self.model_complexity,
+                                        self.detection_confidence, self.track_confidence)
+        self.mp_draw = mp.solutions.drawing_utils
  
-    def findHands(self, img, draw=True):
-        imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        self.results = self.hands.process(imgRGB)
-        #print(results.multi_hand_landmarks)
- 
+    def find_hands(self, img, draw_complex=True):
+        """This method finds the position of our hands
+
+        Args:
+            img (np.array): The frame we wish to find our hands within
+            draw_complex (bool, optional): Controls whether mediapipe draws a skeleton of inferred hand position. Defaults to True.
+
+        Returns:
+            np.array, list::<tuple::<int, int, int>>: Returns the image, now with a hand drawn on it if draw_complex=True, 
+            as well a list of tuples containing the hand part id (finger, palm, knuckle, etc.) and its x, y position.
+            To see the ids and which part of the hand they correspond to, refer to 
+            https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
+        """
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        self.results = self.hands.process(img_rgb)
+        positions = []
         if self.results.multi_hand_landmarks:
-            for handLms in self.results.multi_hand_landmarks:
-                if draw:
-                    self.mpDraw.draw_landmarks(img, handLms,
-                                               self.mpHands.HAND_CONNECTIONS)
-        return img
- 
-    def findPosition(self, img, handNo=0, draw=True):
- 
-        lmList = []
-        if self.results.multi_hand_landmarks:
-            myHand = self.results.multi_hand_landmarks[handNo]
-            for id, lm in enumerate(myHand.landmark):
-                # print(id, lm)
-                h, w, c = img.shape
-                cx, cy = int(lm.x * w), int(lm.y * h)
-                # print(id, cx, cy)
-                lmList.append([id, cx, cy])
-                if draw:
-                    cv2.circle(img, (cx, cy), 15, (255, 0, 255), cv2.FILLED)
- 
-        return lmList
- 
+            for hand in self.results.multi_hand_landmarks:
+                if draw_complex:
+                    self.mp_draw.draw_landmarks(img, hand,
+                                               self.mp_hands.HAND_CONNECTIONS)
+                lm_list = []
+                for id, lm in enumerate(hand.landmark):
+                    h, w, _ = img.shape
+                    cx, cy = int(lm.x * w), int(lm.y * h) # translate back to W, H scale coordinates
+                    lm_list.append((id, cx, cy))
+                positions.append(lm_list)
+        return img, positions
  
 def main():
-    pTime = 0
-    cTime = 0
-    cap = cv2.VideoCapture(1)
-    detector = handDetector()
+    time_start = 0
+    time_end = 0
+    cap = cv2.VideoCapture(0)
+    detector = HandDetector()
     while True:
         success, img = cap.read()
-        img = detector.findHands(img)
-        lmList = detector.findPosition(img)
-        if len(lmList) != 0:
-            print(lmList[4])
+        img, _ = detector.find_hands(img)
  
-        cTime = time.time()
-        fps = 1 / (cTime - pTime)
-        pTime = cTime
+        time_end = time.time()
+        fps = 1 / (time_end - time_start)
+        time_start = time_end
  
         cv2.putText(img, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3,
                     (255, 0, 255), 3)

@@ -1,0 +1,42 @@
+{
+    "green": {
+        "min_hue": 36,
+        "min_sat": 60,
+        "min_val": 20,
+        "max_hue": 70,
+        "max_sat": 255,
+        "max_val": 255
+    },
+    "yellow": {
+        "min_hue": 20,
+        "min_sat": 30,
+        "min_val": 45,
+        "max_hue": 30,
+        "max_sat": 255,
+        "max_val": 255
+    },
+    "red": {
+        "min_hue": 0,
+        "min_sat": 180,
+        "min_val": 125,
+        "max_hue": 7,
+        "max_sat": 255,
+        "max_val": 255
+    },
+    "blue": {
+        "min_hue": 81,
+        "min_sat": 50,
+        "min_val": 30,
+        "max_hue": 126,
+        "max_sat": 255,
+        "max_val": 255
+    },
+    "orange": {
+        "min_hue": 10,
+        "min_sat": 45,
+        "min_val": 40,
+        "max_hue": 20,
+        "max_sat": 255,
+        "max_val": 255
+    }
+}
